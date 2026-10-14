@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html>
+<body>
+  <h2>Hospital Live Queue & Notifications Test</h2>
+
+  <label>Doctor ID:</label>
+  <input id="doctor" value="3">
+  <br><br>
+
+  <label>JWT Token:</label>
+  <input id="token" style="width:600px"
+         placeholder="Paste your JWT token here">
+  <br><br>
+
+  <button onclick="connectQueue()">Connect to Queue</button>
+  <button onclick="connectNotifications()">Connect to Notifications</button>
+  <button onclick="disconnectAll()">Disconnect All</button>
+
+  <h3>Live Queue Output</h3>
+  <pre id="queueOutput"></pre>
+
+  <h3>Personal Notifications Output</h3>
+  <pre id="notificationOutput"></pre>
+
+  <script>
+    let queueWs;
+    let notificationWs;
+
+    function getToken() {
+      return document.getElementById("token").value.trim();
+    }
+
+    function connectQueue() {
+      const doctorId = document.getElementById("doctor").value;
+      const token = getToken();
+
+      if (!token) {
+        alert("Please enter your JWT token.");
+        return;
+      }
+
+      if (queueWs) queueWs.close();
+
+      queueWs = new WebSocket(
+        `ws://127.0.0.1:8000/ws/queue/${doctorId}?token=${encodeURIComponent(token)}`
+      );
+
+      queueWs.onopen = () => {
+        document.getElementById("queueOutput").textContent =
+          "Connected to Live Queue!\n";
+      };
+
+      queueWs.onmessage = (event) => {
+        document.getElementById("queueOutput").textContent +=
+          event.data + "\n";
+      };
+
+      queueWs.onerror = () => {
+        document.getElementById("queueOutput").textContent +=
+          "WebSocket error\n";
+      };
+
+      queueWs.onclose = () => {
+        document.getElementById("queueOutput").textContent +=
+          "Disconnected\n";
+      };
+    }
+
+    function connectNotifications() {
+      const token = getToken();
+
+      if (!token) {
+        alert("Please enter your JWT token.");
+        return;
+      }
+
+      if (notificationWs) notificationWs.close();
+
+      notificationWs = new WebSocket(
+        `ws://127.0.0.1:8000/ws/notifications?token=${encodeURIComponent(token)}`
+      );
+
+      notificationWs.onopen = () => {
+        document.getElementById("notificationOutput").textContent =
+          "Connected to Personal Notifications!\n";
+      };
+
+      notificationWs.onmessage = (event) => {
+        document.getElementById("notificationOutput").textContent +=
+          event.data + "\n";
+      };
+
+      notificationWs.onerror = () => {
+        document.getElementById("notificationOutput").textContent +=
+          "WebSocket error\n";
+      };
+
+      notificationWs.onclose = () => {
+        document.getElementById("notificationOutput").textContent +=
+          "Disconnected\n";
+      };
+    }
+
+    function disconnectAll() {
+      if (queueWs) queueWs.close();
+      if (notificationWs) notificationWs.close();
+    }
+  </script>
+</body>
+</html>
